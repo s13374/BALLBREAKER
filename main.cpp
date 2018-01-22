@@ -26,7 +26,14 @@ void moveBall() {
 		bally = bally + ballvely;
 }
 
-
+void ball_collision() {
+	if (ballx < bkwmin || ballx > bkw - 30) {
+		ballvelx = -ballvelx;
+	}
+	if (bally < bkhmin || bally >bkh - 30) {
+		ballvely = -ballvely;
+	}
+}
 
 int main(int argc, char ** argv) {
 
@@ -47,6 +54,7 @@ int main(int argc, char ** argv) {
 		EventHandler();
 		SDL_Rect ballrect = { ballx,bally,20,30 };
 		moveBall();
+		ball_collision();
 		SDL_RenderCopy(renderer, bktexture, NULL, &bkrect);
 		SDL_RenderCopy(renderer, balltexture, NULL, &ballrect);
 		SDL_RenderPresent(renderer);
