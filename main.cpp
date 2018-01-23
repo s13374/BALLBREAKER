@@ -5,23 +5,26 @@
 
 bool quit = false;
 SDL_Event event;
-int ballx = 10;
-int bally = 10;
+
 int ballvelx = 1;
 int ballvely = 1;
-Physics ball_physics = Physics({ ballx / 1.0, bally / 1.0 }, { ballvelx / 1.0, ballvely / 1.0 }, { 0.000798, 0.000798 });
+
 
 int bkw = 800;
 int bkh = 600;
+int ballx = bkw / 2;
+int bally = bkh - 40;
 int brickw = 80;
 int brickh = 35;
 int bkwmin = 0;
 int bkhmin = 0;
 int cartx = bkw / 2;
 int carty = bkh-30;
+Physics ball_physics = Physics({ ballx / 1.0, bally / 1.0 }, { ballvelx / 1.0, ballvely / 1.0 }, { 0.000798, 0.000798 }); //pozycja x,y predkosc, x,y , przyspieszenie xy
 SDL_Surface *brick;
 SDL_Texture *bricktexture;
 SDL_Rect brickrect[3][7];
+SDL_Rect ballrect;
 
 
 void InitializeBrick() {
@@ -76,40 +79,52 @@ void moveBall(int dt) {
 }
 
 void ball_collision() {
-	/*if (ballx < bkwmin || ballx > bkw - 30) {
-		ballvelx = -ballvelx;
-		ball_physics.bounce(0, -1.0);
-	}
-	if (bally < bkhmin || bally >bkh - 30) {
-		ballvely = -ballvely;
-		ball_physics.bounce(0, -1.0);
-	}
-	int ballscaling = 20;
-	if (bally + ballscaling >= carty && bally + ballscaling <= carty + 30 && ballx + ballscaling >= cartx && ballx + ballscaling <= cartx + 60) {
-		ballvely = -ballvely;
-		ball_physics.bounce(0, -1.0);
-	}*/
-
 	if (ballx < bkwmin) {
-
 		ball_physics.bounce(0, 1.0);
 	}
 	else if (ballx > bkw - 30) {
-		ballvelx = -ballvelx;
-		ball_physics.bounce(0, -1.0);
+		ball_physics.bounce(0, -1.0); 
 	}
 
 	if (bally < bkhmin) {
 		ball_physics.bounce(1, 1.0);
 	}
 	else if(bally > bkh - 30) {
-		ballvely = -ballvely;
 		ball_physics.bounce(1, -1.0);
 	}
 	int ballscaling = 20;
 	if (bally + ballscaling >= carty && bally + ballscaling <= carty + 30 && ballx + ballscaling >= cartx && ballx + ballscaling <= cartx + 60) {
-		ballvely = -ballvely;
 		ball_physics.bounce(1, -1.0);
+	}
+}
+
+bool ball_brick_collision_detect(SDL_Rect rect1, SDL_Rect rect2) { 
+	if (rect1.x > rect2.x + rect2.w) {
+		return false;
+	}
+	if (rect1.x + rect1.w < rect2.x) {
+		return false;
+	}
+	if (rect1.y > rect2.y + rect2.h) {
+		return false;
+	}
+	if (rect1.y + rect1.h < rect2.y) {
+		return false;
+	}
+	return true;
+}
+void ball_brick_collision() {
+	bool a,b;
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 7; j++) {
+			a = ball_brick_collision_detect(brickrect[i][j], ballrect);//pozycja cegly i pilki
+			if (a == true) {
+				brickrect[i][j].x = 30000;
+				ball_physics.bounce(1, 1.0);
+				}
+						
+			a = false;
+		}
 	}
 }
 
@@ -133,8 +148,8 @@ int main(int argc, char ** argv) {
 	SDL_Texture *bricktexture = SDL_CreateTextureFromSurface(renderer, brick);
 
 	SDL_RenderCopy(renderer, bktexture, NULL, &bkrect);
-	
 
+	
 
 	int frame_time = 3;
 	int now;
@@ -142,10 +157,11 @@ int main(int argc, char ** argv) {
 	while (!quit) {
 		now = SDL_GetTicks();
 		EventHandler();
-		SDL_Rect ballrect = { ballx,bally,20,30 };
+		ballrect = { ballx,bally,20,30 };
 		SDL_Rect cartrect = { cartx,carty,60,30 };
 		moveBall(sleep_time);
 		ball_collision();
+		ball_brick_collision();
 		SDL_RenderCopy(renderer, bktexture, NULL, &bkrect);
 		SDL_RenderCopy(renderer, balltexture, NULL, &ballrect);
 		SDL_RenderCopy(renderer, carttexture, NULL, &cartrect);
@@ -173,9 +189,8 @@ int main(int argc, char ** argv) {
 		SDL_RenderPresent(renderer);
 		SDL_RenderClear(renderer);
 		sleep_time = SDL_GetTicks() - now;
-		std::cout << "velx: " << ball_physics.velocity[0] << " vely: " << ball_physics.velocity[1] << std::endl;
-		//if (frame_time - sleep_time > 0)
-			//SDL_Delay(frame_time - sleep_time);
+		//std::cout << "cartx: " << cartx << " carty" << carty << std::endl;
+		//std::cout << "cartx: " << ball_physics.velocity[0] << " vely: " << ball_physics.velocity[1] << std::endl;
 	}
 
 

@@ -9,7 +9,7 @@ Physics::Physics(pos_t pos /*0, 0*/, pos_t vel /*0, 0*/, pos_t acc /*0, 0*/)
 	acceleration = acc;
 }
 
-void Physics::move(int dt, bool resistance /*false*/)
+void Physics::move(int dt, bool resistance /*false*/) // jak dlufo renderowala sie klatka tak mocno sie ruszy
 {
 	double acc_sd = 1.0; //slowdown
 	double vel_sd = 0.999803; // max 1.0

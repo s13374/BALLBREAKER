@@ -7,7 +7,7 @@ inline pos_t operator +(const pos_t &a, const pos_t &b) {
 	return { a[0] + b[0], a[1] + b[1] };
 }
 inline pos_t operator -(const pos_t &a, const pos_t &b) {
-	return { a[0] - b[0], a[1] - b[1] };
+	return { a[0] - b[0], a[1] - b[1] }; //przeciazaone operatory dla mnozenia
 }
 /*pos_t operator -(const pos_t &a) {
 return { -a[0], -a[1] };
@@ -18,7 +18,7 @@ inline pos_t operator *(const pos_t &a, const pos_t &b) {
 inline pos_t operator /(const pos_t &a, const pos_t &b) {
 	return { a[0] / b[0], a[1] / b[1] };
 }
-inline pos_t operator *(const pos_t &a, const double &b) {
+inline pos_t operator *(const pos_t &a, const double &b) { //
 	return { a[0] * b, a[1] * b };
 }
 inline bool operator ==(const pos_t &a, const double &b) {
