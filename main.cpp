@@ -3,8 +3,26 @@
 #include <stdlib.h>
 #include "Physics.h"
 
+
 bool quit = false;
 SDL_Event event;
+void Destroy();
+
+SDL_Surface *brick;
+SDL_Surface *ball;
+SDL_Surface *bk;
+SDL_Surface *cart;
+
+SDL_Texture *bricktexture;
+SDL_Texture *balltexture;
+SDL_Texture *bktexture;
+SDL_Texture *carttexture;
+
+SDL_Rect brickrect[3][7];
+SDL_Rect ballrect;
+
+SDL_Window *window;
+SDL_Renderer *renderer;
 
 int ballvelx = 1;
 int ballvely = 1;
@@ -20,11 +38,10 @@ int bkwmin = 0;
 int bkhmin = 0;
 int cartx = bkw / 2;
 int carty = bkh-30;
-Physics ball_physics = Physics({ ballx / 1.0, bally / 1.0 }, { ballvelx / 1.0, ballvely / 1.0 }, { 0.000798, 0.000798 }); //pozycja x,y predkosc, x,y , przyspieszenie xy
-SDL_Surface *brick;
-SDL_Texture *bricktexture;
-SDL_Rect brickrect[3][7];
-SDL_Rect ballrect;
+int delete_brick_count = 0;
+int no_of_bricks = 21;
+Physics ball_physics = Physics({ ballx / 1.0, bally / 1.0 }, { ballvelx / 1.0, ballvely / 1.0 }, { 0.00079899999, 0.00079899999 }); //pozycja x,y predkosc, x,y , przyspieszenie xy
+
 
 
 void InitializeBrick() {
@@ -70,6 +87,17 @@ void EventHandler() {
 	}
 }
 
+void gameOver() {
+	SDL_Surface *go = SDL_LoadBMP("gameover.bmp");
+	SDL_Texture *gotexture = SDL_CreateTextureFromSurface(renderer, go);
+	SDL_Rect gorect = { 0,0,bkw,bkh };
+	SDL_RenderCopy(renderer, gotexture, NULL, &gorect);
+	SDL_Delay(10000);
+	Destroy();
+	SDL_Quit();
+
+}
+
 void moveBall(int dt) {
 		ballx = ballx + ballvelx;
 		bally = bally + ballvely;
@@ -89,8 +117,11 @@ void ball_collision() {
 	if (bally < bkhmin) {
 		ball_physics.bounce(1, 1.0);
 	}
-	else if(bally > bkh - 30) {
-		ball_physics.bounce(1, -1.0);
+	//else if(bally > bkh - 30) {
+		//ball_physics.bounce(1, -1.0);
+	//}
+	if (bally > bkh + 60) {
+		gameOver();
 	}
 	int ballscaling = 20;
 	if (bally + ballscaling >= carty && bally + ballscaling <= carty + 30 && ballx + ballscaling >= cartx && ballx + ballscaling <= cartx + 60) {
@@ -121,31 +152,55 @@ void ball_brick_collision() {
 			if (a == true) {
 				brickrect[i][j].x = 30000;
 				ball_physics.bounce(1, 1.0);
+				delete_brick_count++;
 				}
 						
 			a = false;
 		}
 	}
 }
+void Destroy() {
+	SDL_DestroyTexture(carttexture);
+	SDL_DestroyTexture(bricktexture);
+	SDL_DestroyTexture(bktexture);
+	SDL_DestroyTexture(balltexture);
+	SDL_FreeSurface(cart);
+	SDL_FreeSurface(brick);
+	SDL_FreeSurface(bk);
+	SDL_FreeSurface(ball);
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+
+}
+void winning() {
+	SDL_Surface *win = SDL_LoadBMP("win.bmp");
+	SDL_Texture *wintexture = SDL_CreateTextureFromSurface(renderer, win);
+	SDL_Rect winrect = { 250,200,350,350 };
+	SDL_RenderCopy(renderer, wintexture, NULL, &winrect);
+	SDL_RenderPresent(renderer);
+	SDL_Delay(10000);
+	Destroy();
+	SDL_Quit();
+}
 
 int main(int argc, char ** argv) {
 
 	SDL_Init(SDL_INIT_VIDEO);
 
-	SDL_Window *window = SDL_CreateWindow("MOJA GRA", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,800,600,0);
-	SDL_Renderer *renderer = SDL_CreateRenderer(window,-1,0);
+	window = SDL_CreateWindow("Ball Breaker - space shopping", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,800,600,0);
+	renderer = SDL_CreateRenderer(window,-1,0);
 	
 	SDL_Rect bkrect = { 0,0,800,600 };
 	InitializeBrick();
 	
-	SDL_Surface *ball = SDL_LoadBMP("ball.bmp");
-	SDL_Surface *bk = SDL_LoadBMP("bk.bmp");
-	SDL_Surface *cart = SDL_LoadBMP("cart.bmp");
-	SDL_Surface *brick = SDL_LoadBMP("brick.bmp");
-	SDL_Texture *balltexture = SDL_CreateTextureFromSurface(renderer, ball);
-	SDL_Texture *bktexture = SDL_CreateTextureFromSurface(renderer, bk);
-	SDL_Texture *carttexture = SDL_CreateTextureFromSurface(renderer, cart);
-	SDL_Texture *bricktexture = SDL_CreateTextureFromSurface(renderer, brick);
+	ball = SDL_LoadBMP("ball.bmp");
+	bk = SDL_LoadBMP("bk.bmp");
+	cart = SDL_LoadBMP("cart.bmp");
+	brick = SDL_LoadBMP("brick.bmp");
+	balltexture = SDL_CreateTextureFromSurface(renderer, ball);
+	bktexture = SDL_CreateTextureFromSurface(renderer, bk);
+	carttexture = SDL_CreateTextureFromSurface(renderer, cart);
+	bricktexture = SDL_CreateTextureFromSurface(renderer, brick);
 
 	SDL_RenderCopy(renderer, bktexture, NULL, &bkrect);
 
@@ -162,6 +217,11 @@ int main(int argc, char ** argv) {
 		moveBall(sleep_time);
 		ball_collision();
 		ball_brick_collision();
+		if (delete_brick_count == no_of_bricks) {
+			winning();
+		}
+
+
 		SDL_RenderCopy(renderer, bktexture, NULL, &bkrect);
 		SDL_RenderCopy(renderer, balltexture, NULL, &ballrect);
 		SDL_RenderCopy(renderer, carttexture, NULL, &cartrect);
@@ -193,7 +253,7 @@ int main(int argc, char ** argv) {
 		//std::cout << "cartx: " << ball_physics.velocity[0] << " vely: " << ball_physics.velocity[1] << std::endl;
 	}
 
-
+	Destroy();
 	SDL_Quit();
 	return 0;
 
